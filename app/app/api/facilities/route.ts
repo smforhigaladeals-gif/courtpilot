@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
@@ -13,9 +13,12 @@ export async function POST(request: Request) {
       )
     }
 
-    const supabase = await createClient()
+    // Use service role for self-serve registration (bypasses RLS)
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
 
-    // Create a simple slug from the facility name
     const slug = name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
