@@ -27,9 +27,9 @@ export async function POST(request: Request) {
         name,
         slug,
         address,
-        contact_email: email,
-        primary_sport: sport || 'pickleball',
-        status: 'active',
+        sport_template: sport || 'pickleball',
+        status: 'trial',
+        settings: { contact_email: email },
       })
       .select()
       .single()
