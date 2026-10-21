@@ -1,4 +1,47 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+
 export default function SignupPage() {
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [form, setForm] = useState({
+    name: '',
+    address: '',
+    email: '',
+    sport: 'pickleball',
+  })
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    try {
+      const res = await fetch('/api/facilities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error || 'Something went wrong')
+        setLoading(false)
+        return
+      }
+
+      // Success → go to a simple success page for now
+      router.push(`/signup/success?name=${encodeURIComponent(form.name)}`)
+    } catch (err) {
+      setError('Network error. Please try again.')
+      setLoading(false)
+    }
+  }
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-emerald-50 to-white">
       {/* Header */}
@@ -23,13 +66,16 @@ export default function SignupPage() {
             Get your courts online in a few minutes. No technical setup needed.
           </p>
 
-          <form className="mt-8 space-y-5">
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 Facility Name
               </label>
               <input
                 type="text"
+                required
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="e.g. Green Valley Pickleball Club"
                 className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
@@ -41,6 +87,9 @@ export default function SignupPage() {
               </label>
               <input
                 type="text"
+                required
+                value={form.address}
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
                 placeholder="Full address of your facility"
                 className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
@@ -52,6 +101,9 @@ export default function SignupPage() {
               </label>
               <input
                 type="email"
+                required
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
                 placeholder="you@example.com"
                 className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
@@ -61,7 +113,11 @@ export default function SignupPage() {
               <label className="block text-sm font-medium text-gray-700">
                 Main Sport
               </label>
-              <select className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+              <select
+                value={form.sport}
+                onChange={(e) => setForm({ ...form, sport: e.target.value })}
+                className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              >
                 <option value="pickleball">Pickleball</option>
                 <option value="badminton">Badminton</option>
                 <option value="tennis">Tennis</option>
@@ -70,20 +126,20 @@ export default function SignupPage() {
               </select>
             </div>
 
+            {error && (
+              <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+
             <button
               type="submit"
-              className="w-full rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white hover:bg-emerald-700"
+              disabled={loading}
+              className="w-full rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
             >
-              Continue →
+              {loading ? 'Creating...' : 'Continue →'}
             </button>
           </form>
-
-          <p className="mt-6 text-center text-sm text-gray-500">
-            Already have an account?{" "}
-            <a href="/login" className="text-emerald-600 hover:underline">
-              Log in
-            </a>
-          </p>
         </div>
       </section>
     </main>
