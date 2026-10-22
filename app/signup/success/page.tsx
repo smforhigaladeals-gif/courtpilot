@@ -35,7 +35,7 @@ export default async function SignupSuccessPage({
             href="/"
             className="mt-8 inline-block rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white hover:bg-emerald-700"
           >
-            Back to Home
+            Add Courts
           </a>
         </div>
       </section>
