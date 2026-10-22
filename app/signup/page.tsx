@@ -34,8 +34,10 @@ export default function SignupPage() {
         return
       }
 
-      // Success → go to a simple success page for now
-      router.push(`/signup/success?name=${encodeURIComponent(form.name)}`)
+      // Success → go to success page with facility ID
+router.push(
+  `/signup/success?name=${encodeURIComponent(form.name)}&id=${data.facility?.id || data.id || ''}`
+)
     } catch (err) {
       setError('Network error. Please try again.')
       setLoading(false)
