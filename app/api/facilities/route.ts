@@ -44,7 +44,11 @@ export async function POST(request: Request) {
       )
     }
 
-    return NextResponse.json({ success: true, facility: data })
+    return NextResponse.json({ 
+  success: true, 
+  facility: data,
+  id: data.id 
+})
   } catch (err) {
     console.error(err)
     return NextResponse.json(
