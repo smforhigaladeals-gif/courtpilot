@@ -1,6 +1,32 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
+async function geocodeAddress(address: string) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+      address
+    )}&limit=1`
+
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'CourtPilot/1.0 (court booking system)',
+      },
+    })
+
+    const data = await res.json()
+
+    if (data && data.length > 0) {
+      return {
+        lat: parseFloat(data[0].lat),
+        lng: parseFloat(data[0].lon),
+      }
+    }
+  } catch (err) {
+    console.error('Geocoding error:', err)
+  }
+  return null
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -23,16 +49,27 @@ export async function POST(request: Request) {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '')
 
+    // Try to get coordinates from the address
+    const coords = await geocodeAddress(address)
+
+    const insertData: any = {
+      name,
+      slug,
+      address,
+      sport_template: sport || 'pickleball',
+      status: 'trial',
+      settings: { contact_email: email },
+    }
+
+    // If we got coordinates, store them as a PostGIS point
+    if (coords) {
+      // PostGIS expects: POINT(longitude latitude)
+      insertData.location = `POINT(${coords.lng} ${coords.lat})`
+    }
+
     const { data, error } = await supabase
       .from('tenants')
-      .insert({
-        name,
-        slug,
-        address,
-        sport_template: sport || 'pickleball',
-        status: 'trial',
-        settings: { contact_email: email },
-      })
+      .insert(insertData)
       .select()
       .single()
 
@@ -44,11 +81,12 @@ export async function POST(request: Request) {
       )
     }
 
-    return NextResponse.json({ 
-  success: true, 
-  facility: data,
-  id: data.id 
-})
+    return NextResponse.json({
+      success: true,
+      facility: data,
+      id: data.id,
+      hasLocation: !!coords,
+    })
   } catch (err) {
     console.error(err)
     return NextResponse.json(
@@ -57,3 +95,4 @@ export async function POST(request: Request) {
     )
   }
 }
+ 
