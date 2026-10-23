@@ -1,10 +1,11 @@
 export default async function SignupSuccessPage({
   searchParams,
 }: {
-  searchParams: Promise<{ name?: string }>
+  searchParams: Promise<{ name?: string; id?: string }>
 }) {
   const params = await searchParams
   const name = params.name || 'your facility'
+  const id = params.id || ''
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-emerald-50 to-white">
@@ -28,14 +29,13 @@ export default async function SignupSuccessPage({
             {name} is now on CourtPilot
           </h1>
           <p className="mt-3 text-gray-600">
-            Your facility has been created. Next we will add courts and set your
-            availability.
+            Your facility has been created. Next, add your courts so players can start booking.
           </p>
           <a
-            href="/"
+            href={`/onboarding/courts?name=${encodeURIComponent(name)}&id=${id}`}
             className="mt-8 inline-block rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white hover:bg-emerald-700"
           >
-            Back to Home
+            Add Courts →
           </a>
         </div>
       </section>
