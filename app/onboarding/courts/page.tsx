@@ -1,9 +1,22 @@
+
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 
 export default function AddCourtsPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-emerald-50 flex items-center justify-center">
+        <p className="text-gray-600">Loading courts...</p>
+      </main>
+    }>
+      <AddCourtsForm />
+    </Suspense>
+  )
+}
+
+function AddCourtsForm() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const facilityName = searchParams.get('name') || 'your facility'
@@ -25,6 +38,7 @@ export default function AddCourtsPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
     if (!tenantId) {
       setError('Missing facility ID. Please start from the signup form again.')
       return
@@ -48,7 +62,9 @@ export default function AddCourtsPage() {
         return
       }
 
-      router.push(`/onboarding/done?name=${encodeURIComponent(facilityName)}`)
+      router.push(
+        `/onboarding/done?name=${encodeURIComponent(facilityName)}`
+      )
     } catch (err) {
       setError('Network error. Please try again.')
       setLoading(false)
@@ -63,7 +79,9 @@ export default function AddCourtsPage() {
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 text-white font-bold">
               CP
             </div>
-            <span className="text-xl font-bold text-gray-900">CourtPilot</span>
+            <span className="text-xl font-bold text-gray-900">
+              CourtPilot
+            </span>
           </a>
         </div>
       </header>
@@ -73,6 +91,7 @@ export default function AddCourtsPage() {
           <h1 className="text-2xl font-bold text-gray-900">
             Add courts for {facilityName}
           </h1>
+
           <p className="mt-2 text-gray-600">
             Add the courts players will be able to book.
           </p>
@@ -83,6 +102,7 @@ export default function AddCourtsPage() {
                 <label className="block text-sm font-medium text-gray-700">
                   Court {index + 1}
                 </label>
+
                 <input
                   type="text"
                   value={court}
