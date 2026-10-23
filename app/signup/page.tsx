@@ -11,6 +11,7 @@ export default function SignupPage() {
     name: '',
     address: '',
     email: '',
+    phone: '',
     sport: 'pickleball',
   })
 
@@ -34,10 +35,9 @@ export default function SignupPage() {
         return
       }
 
-      // Success → go to success page with facility ID
-router.push(
-  `/signup/success?name=${encodeURIComponent(form.name)}&id=${data.facility?.id || data.id || ''}`
-)
+      router.push(
+        `/signup/success?name=${encodeURIComponent(form.name)}&id=${data.facility?.id || data.id || ''}`
+      )
     } catch (err) {
       setError('Network error. Please try again.')
       setLoading(false)
@@ -46,7 +46,6 @@ router.push(
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-emerald-50 to-white">
-      {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <a href="/" className="flex items-center gap-2">
@@ -58,7 +57,6 @@ router.push(
         </div>
       </header>
 
-      {/* Form */}
       <section className="mx-auto max-w-lg px-4 py-16">
         <div className="rounded-2xl border bg-white p-8 shadow-sm">
           <h1 className="text-2xl font-bold text-gray-900">
@@ -99,11 +97,24 @@ router.push(
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Your Email
+                Mobile Number <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="tel"
+                required
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                placeholder="09XX XXX XXXX"
+                className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Email <span className="text-gray-400">(optional)</span>
               </label>
               <input
                 type="email"
-                required
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 placeholder="you@example.com"
