@@ -29,11 +29,10 @@ export async function GET(request: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    // Use the PostGIS function we created in the schema
     const { data, error } = await supabase.rpc('nearby_tenants', {
       player_lat: latitude,
       player_lng: longitude,
-      radius_meters: 50000, // 50 km
+      radius_km: 50,
     })
 
     if (error) {
@@ -41,7 +40,13 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ facilities: data || [] })
+    // Map distance_km → distance_meters for the frontend
+    const facilities = (data || []).map((f: any) => ({
+      ...f,
+      distance_meters: (f.distance_km || 0) * 1000,
+    }))
+
+    return NextResponse.json({ facilities })
   } catch (err) {
     console.error(err)
     return NextResponse.json(
