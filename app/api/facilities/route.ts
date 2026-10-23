@@ -30,11 +30,11 @@ async function geocodeAddress(address: string) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, address, email, sport } = body
+    const { name, address, email, phone, sport } = body
 
-    if (!name || !address || !email) {
+    if (!name || !address || !phone) {
       return NextResponse.json(
-        { error: 'Name, address and email are required' },
+        { error: 'Name, address and mobile number are required' },
         { status: 400 }
       )
     }
@@ -49,7 +49,6 @@ export async function POST(request: Request) {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '')
 
-    // Try to get coordinates from the address
     const coords = await geocodeAddress(address)
 
     const insertData: any = {
@@ -58,12 +57,13 @@ export async function POST(request: Request) {
       address,
       sport_template: sport || 'pickleball',
       status: 'trial',
-      settings: { contact_email: email },
+      settings: {
+        contact_phone: phone,
+        contact_email: email || null,
+      },
     }
 
-    // If we got coordinates, store them as a PostGIS point
     if (coords) {
-      // PostGIS expects: POINT(longitude latitude)
       insertData.location = `POINT(${coords.lng} ${coords.lat})`
     }
 
@@ -95,4 +95,3 @@ export async function POST(request: Request) {
     )
   }
 }
- 
