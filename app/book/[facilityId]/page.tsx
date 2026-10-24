@@ -38,7 +38,7 @@ export default function BookPage() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`/api/facility/${facilityId}`)
+        const res = await fetch(`/api/facilities/${facilityId}`)
         const data = await res.json()
 
         if (!res.ok) {
