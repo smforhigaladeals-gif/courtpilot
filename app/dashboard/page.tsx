@@ -4,12 +4,20 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
+type Court = {
+  id: string
+  name: string
+  is_active: boolean
+  court_type: string | null
+}
+
 type Facility = {
   id: string
   name: string
   address: string | null
   sport_template: string
   status: string
+  courts: Court[]
 }
 
 export default function DashboardPage() {
@@ -39,7 +47,6 @@ export default function DashboardPage() {
   async function loadFacilities(userId: string) {
     const supabase = createClient()
 
-    // Get tenant IDs linked to this user
     const { data: links } = await supabase
       .from('tenant_users')
       .select('tenant_id')
@@ -57,7 +64,24 @@ export default function DashboardPage() {
       .select('id, name, address, sport_template, status')
       .in('id', tenantIds)
 
-    setFacilities(tenants || [])
+    if (!tenants || tenants.length === 0) {
+      setFacilities([])
+      return
+    }
+
+    // Load courts for these facilities
+    const { data: courts } = await supabase
+      .from('courts')
+      .select('id, name, is_active, court_type, tenant_id')
+      .in('tenant_id', tenantIds)
+      .order('sort_order')
+
+    const facilitiesWithCourts: Facility[] = tenants.map((t) => ({
+      ...t,
+      courts: (courts || []).filter((c) => c.tenant_id === t.id),
+    }))
+
+    setFacilities(facilitiesWithCourts)
   }
 
   async function handleClaim(e: React.FormEvent) {
@@ -132,7 +156,7 @@ export default function DashboardPage() {
           Welcome{user?.email ? `, ${user.email}` : ''}.
         </p>
 
-        {/* Linked Facilities */}
+        {/* Linked Facilities + Courts */}
         <div className="mt-10">
           <h2 className="text-lg font-semibold text-gray-900">Your Facilities</h2>
 
@@ -141,15 +165,17 @@ export default function DashboardPage() {
               No facilities linked to this account yet.
             </div>
           ) : (
-            <div className="mt-4 space-y-3">
+            <div className="mt-4 space-y-6">
               {facilities.map((f) => (
                 <div
                   key={f.id}
-                  className="rounded-2xl border bg-white p-5 shadow-sm"
+                  className="rounded-2xl border bg-white p-6 shadow-sm"
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="font-semibold text-gray-900">{f.name}</h3>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {f.name}
+                      </h3>
                       <p className="mt-1 text-sm text-gray-600">
                         {f.address || 'No address'}
                       </p>
@@ -157,6 +183,41 @@ export default function DashboardPage() {
                         {f.sport_template} · {f.status}
                       </p>
                     </div>
+                  </div>
+
+                  {/* Courts list */}
+                  <div className="mt-5 border-t pt-4">
+                    <h4 className="text-sm font-medium text-gray-700">
+                      Courts ({f.courts.length})
+                    </h4>
+
+                    {f.courts.length === 0 ? (
+                      <p className="mt-2 text-sm text-gray-500">
+                        No courts added yet.
+                      </p>
+                    ) : (
+                      <ul className="mt-3 space-y-2">
+                        {f.courts.map((c) => (
+                          <li
+                            key={c.id}
+                            className="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-2.5 text-sm"
+                          >
+                            <span className="font-medium text-gray-900">
+                              {c.name}
+                            </span>
+                            <span
+                              className={`rounded-full px-2.5 py-0.5 text-xs ${
+                                c.is_active
+                                  ? 'bg-emerald-100 text-emerald-700'
+                                  : 'bg-gray-200 text-gray-600'
+                              }`}
+                            >
+                              {c.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 </div>
               ))}
