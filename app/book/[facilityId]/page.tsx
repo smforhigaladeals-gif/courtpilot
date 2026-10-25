@@ -16,6 +16,14 @@ type Facility = {
   sport_template: string
 }
 
+type Slot = {
+  courtId: string
+  courtName: string
+  startTime: string
+  endTime: string
+  label: string
+}
+
 export default function BookPage() {
   const params = useParams()
   const facilityId = params.facilityId as string
@@ -34,6 +42,11 @@ export default function BookPage() {
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
   const [submitError, setSubmitError] = useState('')
+
+  // Alternative slots
+  const [altSlots, setAltSlots] = useState<Slot[]>([])
+  const [loadingAlts, setLoadingAlts] = useState(false)
+  const [showAlts, setShowAlts] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -62,10 +75,29 @@ export default function BookPage() {
     if (facilityId) load()
   }, [facilityId])
 
+  async function loadAlternatives(forDate: string) {
+    if (!forDate) return
+    setLoadingAlts(true)
+    setShowAlts(true)
+
+    try {
+      const res = await fetch(
+        `/api/availability?tenantId=${facilityId}&date=${forDate}`
+      )
+      const data = await res.json()
+      setAltSlots(data.slots || [])
+    } catch (err) {
+      setAltSlots([])
+    } finally {
+      setLoadingAlts(false)
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSubmitting(true)
     setSubmitError('')
+    setShowAlts(false)
 
     if (!selectedCourt || !date || !guestName || !guestPhone) {
       setSubmitError('Please fill in all required fields')
@@ -94,6 +126,8 @@ export default function BookPage() {
 
       if (!res.ok) {
         setSubmitError(data.error || 'Booking failed')
+        // Automatically show other available slots
+        await loadAlternatives(date)
         setSubmitting(false)
         return
       }
@@ -101,9 +135,20 @@ export default function BookPage() {
       setSuccess(true)
     } catch (err) {
       setSubmitError('Network error. Please try again.')
-    } finally {
       setSubmitting(false)
     }
+  }
+
+  function selectAlternative(slot: Slot) {
+    setSelectedCourt(slot.courtId)
+    const d = new Date(slot.startTime)
+    setDate(d.toISOString().split('T')[0])
+    setStartTime(
+      `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+    )
+    setDuration(1)
+    setShowAlts(false)
+    setSubmitError('')
   }
 
   if (loading) {
@@ -146,7 +191,6 @@ export default function BookPage() {
             <h1 className="text-2xl font-bold text-gray-900">Booking confirmed</h1>
             <p className="mt-3 text-gray-600">
               Your court at <strong>{facility.name}</strong> is reserved.
-              You will receive a confirmation shortly.
             </p>
             <a
               href="/find"
@@ -160,7 +204,6 @@ export default function BookPage() {
     )
   }
 
-  // Default date = today
   const today = new Date().toISOString().split('T')[0]
 
   return (
@@ -193,9 +236,7 @@ export default function BookPage() {
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Court
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Court</label>
               <select
                 value={selectedCourt}
                 onChange={(e) => setSelectedCourt(e.target.value)}
@@ -212,24 +253,23 @@ export default function BookPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Date
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Date</label>
               <input
                 type="date"
                 required
                 min={today}
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
+                onChange={(e) => {
+                  setDate(e.target.value)
+                  setShowAlts(false)
+                }}
                 className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Start time
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Start time</label>
                 <input
                   type="time"
                   required
@@ -239,9 +279,7 @@ export default function BookPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Duration
-                </label>
+                <label className="block text-sm font-medium text-gray-700">Duration</label>
                 <select
                   value={duration}
                   onChange={(e) => setDuration(Number(e.target.value))}
@@ -256,9 +294,7 @@ export default function BookPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Your name
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Your name</label>
               <input
                 type="text"
                 required
@@ -270,9 +306,7 @@ export default function BookPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Mobile number
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Mobile number</label>
               <input
                 type="tel"
                 required
@@ -296,8 +330,55 @@ export default function BookPage() {
             >
               {submitting ? 'Booking…' : 'Confirm Booking'}
             </button>
+
+            {date && (
+              <button
+                type="button"
+                onClick={() => loadAlternatives(date)}
+                className="w-full text-sm font-medium text-emerald-600 hover:text-emerald-700"
+              >
+                See other available times on this day
+              </button>
+            )}
           </form>
         </div>
+
+        {/* Alternative slots */}
+        {showAlts && (
+          <div className="mt-6 rounded-2xl border bg-white p-6 shadow-sm">
+            <h3 className="font-semibold text-gray-900">
+              Available slots on {date}
+            </h3>
+
+            {loadingAlts ? (
+              <p className="mt-3 text-sm text-gray-500">Loading…</p>
+            ) : altSlots.length === 0 ? (
+              <p className="mt-3 text-sm text-gray-500">
+                No open slots found for this day.
+              </p>
+            ) : (
+              <ul className="mt-4 space-y-2">
+                {altSlots.slice(0, 12).map((slot, i) => (
+                  <li key={i}>
+                    <button
+                      type="button"
+                      onClick={() => selectAlternative(slot)}
+                      className="flex w-full items-center justify-between rounded-lg border border-gray-200 px-4 py-3 text-left text-sm hover:border-emerald-500 hover:bg-emerald-50"
+                    >
+                      <span>
+                        <span className="font-medium text-gray-900">
+                          {slot.courtName}
+                        </span>
+                        <span className="ml-2 text-gray-600">{slot.label}</span>
+                      </span>
+                      <span className="text-emerald-600">Select</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
       </section>
     </main>
   )
