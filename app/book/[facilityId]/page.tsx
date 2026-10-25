@@ -236,21 +236,27 @@ export default function BookPage() {
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Court</label>
-              <select
-                value={selectedCourt}
-                onChange={(e) => setSelectedCourt(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-              >
-                {courts
-                  .filter((c) => c.is_active)
-                  .map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-              </select>
-            </div>
+  <label className="block text-sm font-medium text-gray-700">Court</label>
+  {courts.filter((c) => c.is_active).length === 0 ? (
+    <div className="mt-1 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+      This facility has no courts available yet. Please check back later.
+    </div>
+  ) : (
+    <select
+      value={selectedCourt}
+      onChange={(e) => setSelectedCourt(e.target.value)}
+      className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+    >
+      {courts
+        .filter((c) => c.is_active)
+        .map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.name}
+          </option>
+        ))}
+    </select>
+  )}
+</div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Date</label>
