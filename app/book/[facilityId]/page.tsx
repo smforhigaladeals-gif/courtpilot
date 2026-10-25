@@ -326,9 +326,13 @@ export default function BookPage() {
             <button
               type="submit"
               disabled={submitting || courts.length === 0}
-              className="w-full rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+              className="w-full rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"  
             >
-              {submitting ? 'Booking…' : 'Confirm Booking'}
+              {submitting
+              ? 'Booking…'
+              : showAlts
+              ? 'Choose an open slot below'
+              : 'Confirm Booking'}
             </button>
 
             {date && (
