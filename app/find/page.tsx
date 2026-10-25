@@ -116,20 +116,28 @@ export default function FindCourtsPage() {
                   key={f.id}
                   className="rounded-2xl border bg-white p-5 shadow-sm"
                 >
-                  <div className="flex items-start justify-between">
-                    <div>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
                       <h2 className="font-semibold text-gray-900">{f.name}</h2>
                       <p className="mt-1 text-sm text-gray-600">
                         {f.address || 'Address not set'}
                       </p>
-                      <p className="mt-1 text-xs text-emerald-700 capitalize">
+                      <p className="mt-1 text-xs capitalize text-emerald-700">
                         {f.sport_template}
                       </p>
                     </div>
-                    <div className="text-right text-sm text-gray-500">
-                      {f.distance_meters < 1000
-                        ? `${Math.round(f.distance_meters)} m`
-                        : `${(f.distance_meters / 1000).toFixed(1)} km`}
+                    <div className="text-right">
+                      <div className="text-sm text-gray-500">
+                        {f.distance_meters < 1000
+                          ? `${Math.round(f.distance_meters)} m`
+                          : `${(f.distance_meters / 1000).toFixed(1)} km`}
+                      </div>
+                      <a
+                        href={`/book/${f.id}`}
+                        className="mt-2 inline-block rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+                      >
+                        Book
+                      </a>
                     </div>
                   </div>
                 </div>
