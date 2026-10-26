@@ -87,7 +87,6 @@ export default function DashboardPage() {
       .in('tenant_id', tenantIds)
       .order('sort_order')
 
-    // Load upcoming + recent bookings
     const { data: bookings } = await supabase
       .from('bookings')
       .select('id, start_time, end_time, status, guest_name, guest_phone, court_id, tenant_id')
@@ -194,7 +193,6 @@ export default function DashboardPage() {
           Welcome{user?.email ? `, ${user.email}` : ''}.
         </p>
 
-        {/* Facilities */}
         <div className="mt-10">
           <h2 className="text-lg font-semibold text-gray-900">Your Facilities</h2>
 
@@ -221,7 +219,6 @@ export default function DashboardPage() {
                     </p>
                   </div>
 
-                  {/* Courts */}
                   <div className="mt-5 border-t pt-4">
                     <h4 className="text-sm font-medium text-gray-700">
                       Courts ({f.courts.length})
@@ -255,7 +252,6 @@ export default function DashboardPage() {
                     )}
                   </div>
 
-                  {/* Bookings */}
                   <div className="mt-5 border-t pt-4">
                     <h4 className="text-sm font-medium text-gray-700">
                       Bookings ({f.bookings.length})
@@ -290,3 +286,63 @@ export default function DashboardPage() {
                                   </p>
                                 )}
                               </div>
+                              <span
+                                className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs capitalize ${
+                                  b.status === 'confirmed'
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : b.status === 'pending'
+                                      ? 'bg-amber-100 text-amber-700'
+                                      : 'bg-gray-200 text-gray-600'
+                                }`}
+                              >
+                                {b.status}
+                              </span>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-12 rounded-2xl border bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-gray-900">
+            Link a facility
+          </h2>
+          <p className="mt-1 text-sm text-gray-600">
+            After you create a facility, paste its ID here to manage it from
+            this dashboard.
+          </p>
+
+          <form onSubmit={handleClaim} className="mt-4 flex gap-3">
+            <input
+              type="text"
+              value={claimId}
+              onChange={(e) => setClaimId(e.target.value)}
+              placeholder="Paste facility ID"
+              className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            />
+            <button
+              type="submit"
+              disabled={claimLoading}
+              className="rounded-lg bg-emerald-600 px-5 py-2.5 font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+            >
+              {claimLoading ? 'Linking…' : 'Link'}
+            </button>
+          </form>
+
+          {claimError && (
+            <p className="mt-3 text-sm text-red-600">{claimError}</p>
+          )}
+          {claimSuccess && (
+            <p className="mt-3 text-sm text-emerald-600">{claimSuccess}</p>
+          )}
+        </div>
+      </section>
+    </main>
+  )
+}
