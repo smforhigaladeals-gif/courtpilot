@@ -26,16 +26,22 @@ export default async function SignupSuccessPage({
             ✓
           </div>
           <h1 className="text-2xl font-bold text-gray-900">
-            {name} is now on CourtPilot
+            {name} is created
           </h1>
           <p className="mt-3 text-gray-600">
-            Your facility has been created. Next, add your courts so players can start booking.
+            Next step (required): add the courts players will book.
+            Without courts, players cannot reserve a time.
           </p>
+
+          <div className="mt-6 rounded-xl bg-amber-50 px-4 py-3 text-left text-sm text-amber-800">
+            <strong>Important:</strong> You must add at least one court to finish setup.
+          </div>
+
           <a
             href={`/onboarding/courts?name=${encodeURIComponent(name)}&id=${id}`}
-            className="mt-8 inline-block rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white hover:bg-emerald-700"
+            className="mt-8 inline-block w-full rounded-xl bg-emerald-600 px-6 py-3.5 font-semibold text-white hover:bg-emerald-700"
           >
-            Add Courts →
+            Add Courts Now →
           </a>
         </div>
       </section>
