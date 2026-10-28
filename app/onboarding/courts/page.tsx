@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 
 function AddCourtsContent() {
@@ -147,13 +147,16 @@ function AddCourtsContent() {
     </main>
   )
 }
+
 export default function AddCourtsPage() {
   return (
-    <Suspense fallback={
-      <main className="flex min-h-screen items-center justify-center bg-emerald-50">
-        <p className="text-gray-600">Loading…</p>
-      </main>
-    }>
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-emerald-50">
+          <p className="text-gray-600">Loading…</p>
+        </main>
+      }
+    >
       <AddCourtsContent />
     </Suspense>
   )
