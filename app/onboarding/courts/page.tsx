@@ -1,11 +1,9 @@
-export const dynamic = 'force-dynamic'
-
 'use client'
 
 import { useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 
-export default function AddCourtsPage() {
+function AddCourtsContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const facilityName = searchParams.get('name') || 'your facility'
@@ -147,5 +145,16 @@ export default function AddCourtsPage() {
         </div>
       </section>
     </main>
+  )
+}
+export default function AddCourtsPage() {
+  return (
+    <Suspense fallback={
+      <main className="flex min-h-screen items-center justify-center bg-emerald-50">
+        <p className="text-gray-600">Loading…</p>
+      </main>
+    }>
+      <AddCourtsContent />
+    </Suspense>
   )
 }
