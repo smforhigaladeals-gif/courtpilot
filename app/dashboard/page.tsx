@@ -262,11 +262,75 @@ export default function DashboardPage() {
                       </p>
                     ) : (
                       <ul className="mt-3 space-y-2">
-                        {f.bookings.map((b) => (
-                          <li
-                            key={b.id}
-                            className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 text-sm"
-                          >
+                        {f.bookings.length === 0 ? (
+  <p className="mt-2 text-sm text-gray-500">
+    No bookings yet.
+  </p>
+) : (
+  <ul className="mt-3 space-y-2">
+    {f.bookings.map((b) => (
+      <li
+        key={b.id}
+        className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 text-sm"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="font-medium text-gray-900">
+              {b.guest_name || 'Guest'}
+            </p>
+            <p className="mt-0.5 text-gray-600">
+              {b.court_name} · {formatDateTime(b.start_time)}
+              {' – '}
+              {new Date(b.end_time).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </p>
+            {b.guest_phone && (
+              <p className="mt-0.5 text-xs text-gray-500">
+                {b.guest_phone}
+              </p>
+            )}
+          </div>
+          <span
+            className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs capitalize ${
+              b.status === 'confirmed'
+                ? 'bg-emerald-100 text-emerald-700'
+                : b.status === 'pending'
+                  ? 'bg-amber-100 text-amber-700'
+                  : b.status === 'cancelled'
+                    ? 'bg-red-100 text-red-700'
+                    : 'bg-gray-200 text-gray-600'
+            }`}
+          >
+            {b.status}
+          </span>
+        </div>
+
+        {(b.status === 'pending' || b.status === 'confirmed') && (
+          <div className="mt-3 flex gap-2">
+            {b.status === 'pending' && (
+              <button
+                type="button"
+                onClick={() => updateBookingStatus(b.id, 'confirmed')}
+                className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700"
+              >
+                Confirm
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => updateBookingStatus(b.id, 'cancelled')}
+              className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+      </li>
+    ))}
+  </ul>
+)}
                             <div className="flex items-start justify-between gap-3">
                               <div>
                                 <p className="font-medium text-gray-900">
