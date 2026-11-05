@@ -1,4 +1,4 @@
- 'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -44,7 +44,6 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const supabase = createClient()
-
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) {
         router.push('/login')
@@ -58,7 +57,6 @@ export default function DashboardPage() {
 
   async function loadFacilities(userId: string) {
     const supabase = createClient()
-
     const { data: links } = await supabase
       .from('tenant_users')
       .select('tenant_id')
@@ -70,7 +68,6 @@ export default function DashboardPage() {
     }
 
     const tenantIds = links.map((l) => l.tenant_id)
-
     const { data: tenants } = await supabase
       .from('tenants')
       .select('id, name, address, sport_template, status')
@@ -91,12 +88,11 @@ export default function DashboardPage() {
       .from('bookings')
       .select('id, start_time, end_time, status, guest_name, guest_phone, court_id, tenant_id')
       .in('tenant_id', tenantIds)
-      .in('status', ['pending', 'confirmed', 'completed'])
+      .in('status', ['pending', 'confirmed', 'completed', 'cancelled'])
       .order('start_time', { ascending: true })
       .limit(50)
 
     const courtMap = new Map((courts || []).map((c) => [c.id, c.name]))
-
     const facilitiesWithData: Facility[] = tenants.map((t) => ({
       ...t,
       courts: (courts || []).filter((c) => c.tenant_id === t.id),
@@ -107,33 +103,48 @@ export default function DashboardPage() {
           court_name: courtMap.get(b.court_id) || 'Court',
         })),
     }))
-
     setFacilities(facilitiesWithData)
+  }
+
+  async function updateBookingStatus(
+    bookingId: string,
+    status: 'confirmed' | 'cancelled'
+  ) {
+    try {
+      const res = await fetch(`/api/bookings/${bookingId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        alert(data.error || 'Could not update booking')
+        return
+      }
+      if (user) await loadFacilities(user.id)
+    } catch (err) {
+      alert('Network error')
+    }
   }
 
   async function handleClaim(e: React.FormEvent) {
     e.preventDefault()
     if (!claimId.trim()) return
-
     setClaimLoading(true)
     setClaimError('')
     setClaimSuccess('')
-
     try {
       const res = await fetch('/api/link-facility', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tenantId: claimId.trim() }),
       })
-
       const data = await res.json()
-
       if (!res.ok) {
         setClaimError(data.error || 'Could not link facility')
         setClaimLoading(false)
         return
       }
-
       setClaimSuccess('Facility linked successfully!')
       setClaimId('')
       if (user) await loadFacilities(user.id)
@@ -203,17 +214,10 @@ export default function DashboardPage() {
           ) : (
             <div className="mt-4 space-y-8">
               {facilities.map((f) => (
-                <div
-                  key={f.id}
-                  className="rounded-2xl border bg-white p-6 shadow-sm"
-                >
+                <div key={f.id} className="rounded-2xl border bg-white p-6 shadow-sm">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {f.name}
-                    </h3>
-                    <p className="mt-1 text-sm text-gray-600">
-                      {f.address || 'No address'}
-                    </p>
+                    <h3 className="text-lg font-semibold text-gray-900">{f.name}</h3>
+                    <p className="mt-1 text-sm text-gray-600">{f.address || 'No address'}</p>
                     <p className="mt-1 text-xs capitalize text-emerald-700">
                       {f.sport_template} · {f.status}
                     </p>
@@ -224,9 +228,7 @@ export default function DashboardPage() {
                       Courts ({f.courts.length})
                     </h4>
                     {f.courts.length === 0 ? (
-                      <p className="mt-2 text-sm text-gray-500">
-                        No courts added yet.
-                      </p>
+                      <p className="mt-2 text-sm text-gray-500">No courts added yet.</p>
                     ) : (
                       <ul className="mt-3 space-y-2">
                         {f.courts.map((c) => (
@@ -234,9 +236,7 @@ export default function DashboardPage() {
                             key={c.id}
                             className="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-2.5 text-sm"
                           >
-                            <span className="font-medium text-gray-900">
-                              {c.name}
-                            </span>
+                            <span className="font-medium text-gray-900">{c.name}</span>
                             <span
                               className={`rounded-full px-2.5 py-0.5 text-xs ${
                                 c.is_active
@@ -257,88 +257,21 @@ export default function DashboardPage() {
                       Bookings ({f.bookings.length})
                     </h4>
                     {f.bookings.length === 0 ? (
-                      <p className="mt-2 text-sm text-gray-500">
-                        No bookings yet.
-                      </p>
+                      <p className="mt-2 text-sm text-gray-500">No bookings yet.</p>
                     ) : (
                       <ul className="mt-3 space-y-2">
-                        {f.bookings.length === 0 ? (
-  <p className="mt-2 text-sm text-gray-500">
-    No bookings yet.
-  </p>
-) : (
-  <ul className="mt-3 space-y-2">
-    {f.bookings.map((b) => (
-      <li
-        key={b.id}
-        className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 text-sm"
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="font-medium text-gray-900">
-              {b.guest_name || 'Guest'}
-            </p>
-            <p className="mt-0.5 text-gray-600">
-              {b.court_name} · {formatDateTime(b.start_time)}
-              {' – '}
-              {new Date(b.end_time).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </p>
-            {b.guest_phone && (
-              <p className="mt-0.5 text-xs text-gray-500">
-                {b.guest_phone}
-              </p>
-            )}
-          </div>
-          <span
-            className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs capitalize ${
-              b.status === 'confirmed'
-                ? 'bg-emerald-100 text-emerald-700'
-                : b.status === 'pending'
-                  ? 'bg-amber-100 text-amber-700'
-                  : b.status === 'cancelled'
-                    ? 'bg-red-100 text-red-700'
-                    : 'bg-gray-200 text-gray-600'
-            }`}
-          >
-            {b.status}
-          </span>
-        </div>
-
-        {(b.status === 'pending' || b.status === 'confirmed') && (
-          <div className="mt-3 flex gap-2">
-            {b.status === 'pending' && (
-              <button
-                type="button"
-                onClick={() => updateBookingStatus(b.id, 'confirmed')}
-                className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700"
-              >
-                Confirm
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => updateBookingStatus(b.id, 'cancelled')}
-              className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-            >
-              Cancel
-            </button>
-          </div>
-        )}
-      </li>
-    ))}
-  </ul>
-)}
+                        {f.bookings.map((b) => (
+                          <li
+                            key={b.id}
+                            className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 text-sm"
+                          >
                             <div className="flex items-start justify-between gap-3">
                               <div>
                                 <p className="font-medium text-gray-900">
                                   {b.guest_name || 'Guest'}
                                 </p>
                                 <p className="mt-0.5 text-gray-600">
-                                  {b.court_name} · {formatDateTime(b.start_time)}
-                                  {' – '}
+                                  {b.court_name} · {formatDateTime(b.start_time)} –{' '}
                                   {new Date(b.end_time).toLocaleTimeString([], {
                                     hour: '2-digit',
                                     minute: '2-digit',
@@ -356,12 +289,38 @@ export default function DashboardPage() {
                                     ? 'bg-emerald-100 text-emerald-700'
                                     : b.status === 'pending'
                                       ? 'bg-amber-100 text-amber-700'
-                                      : 'bg-gray-200 text-gray-600'
+                                      : b.status === 'cancelled'
+                                        ? 'bg-red-100 text-red-700'
+                                        : 'bg-gray-200 text-gray-600'
                                 }`}
                               >
                                 {b.status}
                               </span>
                             </div>
+                            {(b.status === 'pending' || b.status === 'confirmed') && (
+                              <div className="mt-3 flex gap-2">
+                                {b.status === 'pending' && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      updateBookingStatus(b.id, 'confirmed')
+                                    }
+                                    className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700"
+                                  >
+                                    Confirm
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    updateBookingStatus(b.id, 'cancelled')
+                                  }
+                                  className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            )}
                           </li>
                         ))}
                       </ul>
@@ -374,14 +333,11 @@ export default function DashboardPage() {
         </div>
 
         <div className="mt-12 rounded-2xl border bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Link a facility
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-900">Link a facility</h2>
           <p className="mt-1 text-sm text-gray-600">
-            After you create a facility, paste its ID here to manage it from
-            this dashboard.
+            After you create a facility, paste its ID here to manage it from this
+            dashboard.
           </p>
-
           <form onSubmit={handleClaim} className="mt-4 flex gap-3">
             <input
               type="text"
@@ -398,10 +354,7 @@ export default function DashboardPage() {
               {claimLoading ? 'Linking…' : 'Link'}
             </button>
           </form>
-
-          {claimError && (
-            <p className="mt-3 text-sm text-red-600">{claimError}</p>
-          )}
+          {claimError && <p className="mt-3 text-sm text-red-600">{claimError}</p>}
           {claimSuccess && (
             <p className="mt-3 text-sm text-emerald-600">{claimSuccess}</p>
           )}
