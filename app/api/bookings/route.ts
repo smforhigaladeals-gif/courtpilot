@@ -25,6 +25,15 @@ export async function POST(request: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
+    // Get court price
+    const { data: court } = await supabase
+      .from('courts')
+      .select('price_cents')
+      .eq('id', courtId)
+      .single()
+
+    const amountCents = court?.price_cents ?? 0
+
     const { data, error } = await supabase
       .from('bookings')
       .insert({
@@ -36,24 +45,26 @@ export async function POST(request: Request) {
         guest_phone: guestPhone,
         status: 'confirmed',
         payment_status: 'unpaid',
-        amount_cents: 0,
+        amount_cents: amountCents,
       })
       .select()
       .single()
 
     if (error) {
       console.error('Booking error:', error)
-      // Friendly message for double-booking
-      if (error.message?.includes('no_overlapping_bookings') || error.code === '23P01') {
+      if (
+        error.message?.includes('no_overlapping_bookings') ||
+        error.code === '23P01'
+      ) {
         return NextResponse.json(
-          { error: 'This court is already booked for that time. Please choose another slot.' },
+          {
+            error:
+              'This court is already booked for that time. Please choose another slot.',
+          },
           { status: 409 }
         )
       }
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, booking: data })
