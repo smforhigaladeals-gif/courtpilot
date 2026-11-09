@@ -18,12 +18,13 @@ export async function POST(request: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    const rows = courts.map((name: string, index: number) => ({
-      tenant_id: tenantId,
-      name: name.trim() || `Court ${index + 1}`,
-      is_active: true,
-      sort_order: index,
-    }))
+    const rows = courts: cleaned.map((name, index) => ({
+  tenant_id: tenantId,
+  name,
+  sort_order: index,
+  is_active: true,
+  price_cents: 0, // default; can be updated later
+}))
 
     const { data, error } = await supabase
       .from('courts')
