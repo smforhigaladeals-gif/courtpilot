@@ -20,6 +20,8 @@ type Booking = {
   guest_phone: string | null
   court_id: string
   court_name?: string
+  amount_cents?: number
+  payment_status?: string
 }
 
 type Facility = {
